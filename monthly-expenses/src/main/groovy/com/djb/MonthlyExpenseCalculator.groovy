@@ -3,49 +3,51 @@
  */
 package com.djb
 
-abstract class Employee {
-    Float allocation = 0f
-    Float getMonthlyExpense() { return this.allocation }
+interface MonthlyAccountableEntity {
+    Float getMonthlyAllocationExpense()
 }
 
-class QATester extends Employee {
+class QATester implements MonthlyAccountableEntity {
     @Override
-    Float getMonthlyExpense() {
+    Float getMonthlyAllocationExpense() {
         return Department.monthlyAllocationsByClass.tester
     }
 }
-class Developer extends  Employee {
+class Developer implements MonthlyAccountableEntity {
     @Override
-    Float getMonthlyExpense() {
+    Float getMonthlyAllocationExpense() {
         return Department.monthlyAllocationsByClass.developer
     }
 }
-class Manager extends Employee {
-    List<Employee> subordinates = []
+
+class Manager implements MonthlyAccountableEntity {
+    private List<MonthlyAccountableEntity> employees = []
 
     @Override
-    Float getMonthlyExpense() {
+    Float getMonthlyAllocationExpense() {
         Float monthlyExpense = Department.monthlyAllocationsByClass.manager
-        for(employee in subordinates) {
-            monthlyExpense += employee?.getMonthlyExpense()
+        for(employee in employees) {
+            monthlyExpense += employee?.getMonthlyAllocationExpense()
         }
         return monthlyExpense
     }
+
+    def addEmployee(MonthlyAccountableEntity employee) { this.employees << employee }
 }
 
-final class Department {
+final class Department implements MonthlyAccountableEntity {
     static monthlyAllocationsByClass = [manager: 300f, tester: 500f, developer: 1000f]
-    List employees = []
+    private List<Manager> managers = []
 
-    def addEmployee(employee) { this.employees << employee }
+    def addManager(Manager manager) { this.managers << manager }
 
-    public def getMonthlyExpense() {
+    @Override
+    Float getMonthlyAllocationExpense() {
         Float total = 0f
-        employees?.each { Employee employee ->
-            total += employee?.getMonthlyExpense()
+        managers?.each { manager ->
+            total += manager?.getMonthlyAllocationExpense()
         }
         return total
     }
-
 }
 
